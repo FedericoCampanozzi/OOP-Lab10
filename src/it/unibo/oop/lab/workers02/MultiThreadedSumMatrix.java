@@ -13,20 +13,12 @@ public class MultiThreadedSumMatrix implements SumMatrix {
 
     @Override
     public double sum(final double[][] matrix) {
-
-        final List<Double> list = new ArrayList<>();
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                list.add(matrix[i][j]);
-            }
-        }
-
-        final int size = list.size() % nthread + list.size() / nthread;
+        final int total = matrix.length * matrix[0].length;
+        final int size = total % nthread + total / nthread;
 
         final List<Worker> workers = new ArrayList<>(nthread);
-        for (int start = 0; start < list.size(); start += size) {
-            workers.add(new Worker(list, start, size));
+        for (int i = 0; i < total; i += size) {
+            workers.add(new Worker(matrix, i, size));
         }
 
         for (final Worker w: workers) {
@@ -48,8 +40,8 @@ public class MultiThreadedSumMatrix implements SumMatrix {
     }
 
     private static class Worker extends Thread {
-        private final List<Double> list;
-        private final int startpos;
+        private final double[][] matrix;
+        private int offset;
         private final int nelem;
         private long res;
 
@@ -63,18 +55,18 @@ public class MultiThreadedSumMatrix implements SumMatrix {
          * @param nelem
          *            the no. of elems to sum up for this worker
          */
-        Worker(final List<Double> list, final int startpos, final int nelem) {
-            super();
-            this.list = list;
-            this.startpos = startpos;
+        Worker(final double[][] matrix, final int offset, final int nelem) {
+            super(Integer.toString(nelem));
+            this.matrix = matrix;
+            this.offset = offset;
             this.nelem = nelem;
         }
 
         @Override
         public void run() {
-            System.out.println("Working from position " + startpos + " to position " + (startpos + nelem - 1));
-            for (int i = startpos; i < list.size() && i < startpos + nelem; i++) {
-                this.res += this.list.get(i);
+            //System.out.println("start index as list : " + this.offset + "");
+            for (int i = 0; i < this.nelem; i++) {
+                this.res += this.matrix[(this.offset + i) % matrix.length][(this.offset + i) / matrix.length];
             }
         }
 
