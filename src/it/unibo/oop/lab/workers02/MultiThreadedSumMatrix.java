@@ -1,90 +1,89 @@
 package it.unibo.oop.lab.workers02;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MultiThreadedSumMatrix implements SumMatrix {
 
     private final int nthread;
 
-    MultiThreadedSumMatrix(final int nthread) {
+    /**
+     * Construct a multithreaded matrix sum.
+     * 
+     * @param nthread
+     *            no. threads to be adopted to perform the operation
+     */
+    public MultiThreadedSumMatrix(final int nthread) {
+        super();
+        if (nthread < 1) {
+            throw new IllegalArgumentException();
+        }
         this.nthread = nthread;
     }
 
-    @Override
-    public double sum(final double[][] matrix) {
-        final int total = matrix.length * matrix[0].length;
-        final int size = total % nthread + total / nthread;
-        final List<Worker> workers = new ArrayList<>(nthread);
+    private class Worker extends Thread {
 
-        for (int i = 0; i < total; i += size) {
-            //if ((i + size) > total) {
-            //    workers.add(new Worker(matrix, i, size - (total % 2))); 
-            //} else {
-                workers.add(new Worker(matrix, i, size)); 
-            //}
-        }
-
-        for (final Worker w: workers) {
-            w.start();
-        }
-
-        long sum = 0;
-
-        for (final Worker w: workers) {
-            try {
-                w.join();
-                sum += w.getResult();
-            } catch (InterruptedException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        return sum;
-    }
-
-    private static class Worker extends Thread {
         private final double[][] matrix;
-        private int offset;
+        private final int startpos;
         private final int nelem;
-        private long res;
+        private double res;
 
         /**
-         * Build a new worker.
+         * Builds a new worker.
          * 
-         * @param list
-         *            the list to sum
+         * @param matrix
+         *            the matrix to be summed
          * @param startpos
-         *            the initial position for this worker
+         *            the start position for the sum in charge to this worker
          * @param nelem
-         *            the no. of elems to sum up for this worker
+         *            the no. of element for him to sum
          */
-        Worker(final double[][] matrix, final int offset, final int nelem) {
-            super(Integer.toString(nelem));
-            this.matrix = matrix;
-            this.offset = offset;
+        Worker(final double[][] matrix, final int startpos, final int nelem) {
+            super();
+            this.matrix = Arrays.copyOf(matrix, matrix.length);
+            this.startpos = startpos;
             this.nelem = nelem;
         }
 
         @Override
         public void run() {
-            System.out.println("start index as list : " + this.offset + " elem count : " + this.nelem);
-            for (int i = 0; i < this.nelem; i++) {
-                if((this.offset + i) / matrix.length < matrix.length) {
-                this.res += this.matrix[(this.offset + i) % matrix.length][(this.offset + i) / matrix.length];
-            }}
+            for (int i = startpos; i < matrix.length && i < startpos + nelem; i++) {
+                for (final double d : this.matrix[i]) {
+                    this.res += d;
+                }
+            }
         }
 
-        /**
-         * Returns the result of summing up the integers within the list.
-         * 
-         * @return the sum of every element in the array
-         */
-        public long getResult() {
+        public double getResult() {
             return this.res;
         }
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double sum(final double[][] matrix) {
+        final int size = matrix.length / nthread + matrix.length % nthread;
+        final List<Worker> workers = new ArrayList<>(nthread);
+        for (int start = 0; start < matrix.length; start += size) {
+            workers.add(new Worker(matrix, start, size));
+        }
+        for (final Thread worker: workers) {
+            worker.start();
+        }
+        double sum = 0;
+        for (final Worker worker: workers) {
+            try {
+                worker.join();
+                sum += worker.getResult();
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        return sum;
+    }
 
 }
