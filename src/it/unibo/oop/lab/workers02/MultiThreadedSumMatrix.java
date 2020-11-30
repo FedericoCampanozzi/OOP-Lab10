@@ -15,10 +15,14 @@ public class MultiThreadedSumMatrix implements SumMatrix {
     public double sum(final double[][] matrix) {
         final int total = matrix.length * matrix[0].length;
         final int size = total % nthread + total / nthread;
-
         final List<Worker> workers = new ArrayList<>(nthread);
+
         for (int i = 0; i < total; i += size) {
-            workers.add(new Worker(matrix, i, size));
+            //if ((i + size) > total) {
+            //    workers.add(new Worker(matrix, i, size - (total % 2))); 
+            //} else {
+                workers.add(new Worker(matrix, i, size)); 
+            //}
         }
 
         for (final Worker w: workers) {
@@ -64,10 +68,11 @@ public class MultiThreadedSumMatrix implements SumMatrix {
 
         @Override
         public void run() {
-            //System.out.println("start index as list : " + this.offset + "");
+            System.out.println("start index as list : " + this.offset + " elem count : " + this.nelem);
             for (int i = 0; i < this.nelem; i++) {
+                if((this.offset + i) / matrix.length < matrix.length) {
                 this.res += this.matrix[(this.offset + i) % matrix.length][(this.offset + i) / matrix.length];
-            }
+            }}
         }
 
         /**

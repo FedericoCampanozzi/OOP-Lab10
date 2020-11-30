@@ -49,7 +49,7 @@ public class TestMatrix {
         }
         System.out.println("BTW: the sum with " + SIZE + "*" + SIZE + " elements is: " + sum);
         long time;
-        for (final int threads: new int[] { 1, 2, 3, 8, 16, 32, 100 }) {
+        for (final int threads: new int[] { 1, 2, 3, 5, 7, 8, 11, 16, 32, 100 }) {
             final SumMatrix sumList = new MultiThreadedSumMatrix(threads);
             time = System.nanoTime();
             assertEquals(sum, sumList.sum(matrix), EXPECTED_DELTA);
